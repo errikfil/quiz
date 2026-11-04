@@ -1,0 +1,21 @@
+# Προαιρετικό: στο Mac με 8GB προτίμησε native MySQL, για να μη χρειάζεται Docker Desktop.
+services:
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "127.0.0.1:3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: sima_local_root
+      MYSQL_DATABASE: sima
+      MYSQL_USER: sima
+      MYSQL_PASSWORD: sima_local_dev
+    command: ["--innodb-buffer-pool-size=128M", "--performance-schema=OFF"]
+    volumes:
+      - sima-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+volumes:
+  sima-mysql:

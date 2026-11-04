@@ -1,0 +1,25 @@
+# Επαλήθευση στην ανάπτυξη
+
+Έλεγχοι που εκτελέστηκαν στις 4 Νοεμβρίου 2026 στο Linux cloud περιβάλλον:
+
+| Έλεγχος | Αποτέλεσμα |
+|---|---|
+| .NET 8.0.427 build | Πέρασε, 0 warnings / 0 errors |
+| TypeScript + Vite production build | Πέρασε |
+| HTTP / SignalR integration με πραγματική MySQL 8 και MySqlConnector 2.6.2 | 32 έλεγχοι πέρασαν |
+| HTTP / SignalR integration σε EF InMemory demo | 32 έλεγχοι πέρασαν |
+| Playwright: home / mobile διάταξη / δημιουργία και επεξεργασία quiz | Πέρασε |
+| Playwright: ξεχωριστός καθηγητής και mobile παίκτης, refresh/rejoin, απάντηση, κατάταξη, CSV | Πέρασε |
+| Quiz στη MySQL μετά από επανεκκίνηση API | Παρέμεινε προσβάσιμο |
+| `scripts/setup-cloud.sh` με locked .NET restore και npm ci | Πέρασε |
+| `scripts/dev.sh --mysql` και `--demo` | Εκκινήθηκαν και ελέγχθηκαν λειτουργικά |
+| `npm audit` μετά τις ενημερώσεις | 0 γνωστές ευπάθειες |
+| `dotnet list package --vulnerable --include-transitive` | Δεν αναφέρθηκαν γνωστές ευπάθειες από τις τρέχουσες πηγές |
+
+Η επαλήθευση έγινε με Node 24.22.1 και system Chromium. Το Node 22 προτείνεται στο README και δηλώνεται στο CI, αλλά το CI δεν έχει εκτελεστεί ακόμη στο GitHub. Δεν δοκιμάστηκαν φυσικό MacBook, Safari ή πραγματικές κινητές συσκευές. Η mobile δοκιμή αφορά viewport Chromium 390 × 844. Δεν έγινε load test 100 παικτών.
+
+Κατά την ανάπτυξη βρέθηκε και διορθώθηκε η προσθήκη νέων ερωτήσεων κατά την επεξεργασία quiz στη MySQL. Μετά τη διόρθωση πέρασαν οι λειτουργικοί έλεγχοι και στις δύο βάσεις. Ένα επόμενο browser rerun απέτυχε επειδή εκτελέστηκε npm ci ενώ έτρεχε ο Vite: η cache των optimized dependencies επέστρεφε HTTP 504. Με επανεκκίνηση του dev server οι δύο δοκιμές πέρασαν ξανά. Η σχετική οδηγία έχει προστεθεί στο README και στις οδηγίες του cloud.
+
+Το build εμφανίζει δύο μη ανασταλτικά warnings για PURE annotations μέσα στην εξάρτηση SignalR. Ο Rollup αφαιρεί τα annotations και ολοκληρώνει κανονικά το bundle.
+
+Οι έλεγχοι δημιουργούν δικά τους development δεδομένα. Οι περασμένοι έλεγχοι επιβεβαιώνουν τη συγκεκριμένη ροή· δεν αποτελούν πιστοποίηση production ασφάλειας ή υποστήριξης όλων των browsers.

@@ -1,0 +1,50 @@
+name: Build and live quiz checks
+on: [push, pull_request]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: local_root
+          MYSQL_DATABASE: sima
+          MYSQL_USER: sima
+          MYSQL_PASSWORD: local_test
+        ports: ["3307:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost --silent"
+          --health-interval=5s --health-timeout=3s --health-retries=30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: dotnet restore backend --locked-mode
+      - run: dotnet build backend --no-restore
+      - run: npm run build
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - name: Start API and web
+        env:
+          ConnectionStrings__Quiz: Server=127.0.0.1;Port=3307;Database=sima;User=sima;Password=local_test
+        run: |
+          dotnet run --project backend --no-build > /tmp/api.log 2>&1 &
+          (cd frontend && npm run dev -- --port 5173 --strictPort) > /tmp/web.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:5080/api/health && curl -fsS http://127.0.0.1:5173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/api.log /tmp/web.log
+          exit 1
+      - run: node tests/live.mjs
+      - run: npm run test:e2e
+        working-directory: frontend
