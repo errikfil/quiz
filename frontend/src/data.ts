@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { QuizInput, SavedQuiz, Ticket } from "./types";
+import type { SavedQuiz, Ticket } from "./types";
 export const api = axios.create({ baseURL: "/api", timeout: 15000 });
 export function errorMessage(error: unknown): string {
   if (axios.isAxiosError(error))
@@ -44,52 +44,3 @@ export const blankQuestion = () => ({
   correctIndex: 0,
   seconds: 20,
 });
-export const sampleQuiz: QuizInput = {
-  title: "Μικρές ερωτήσεις, μεγάλες ιδέες",
-  questions: [
-    {
-      text: "Ποια αρχή κάνει ένα interface πιο εύκολο στη χρήση;",
-      options: [
-        "Συνέπεια στη σχεδίαση",
-        "Όσο περισσότερα κουμπιά γίνεται",
-        "Κρυμμένη πλοήγηση",
-        "Διαφορετικά χρώματα παντού",
-      ],
-      correctIndex: 0,
-      seconds: 20,
-    },
-    {
-      text: "Τι σημαίνει το HTTP status code 404;",
-      options: [
-        "Επιτυχής σύνδεση",
-        "Ο πόρος δεν βρέθηκε",
-        "Ο server κάνει επανεκκίνηση",
-        "Λάθος κωδικός πρόσβασης",
-      ],
-      correctIndex: 1,
-      seconds: 15,
-    },
-    {
-      text: "Ποιο εργαλείο χρησιμοποιούμε εδώ για live επικοινωνία;",
-      options: [
-        "Entity Framework",
-        "Tailwind CSS",
-        "SignalR",
-        "MySQL Workbench",
-      ],
-      correctIndex: 2,
-      seconds: 20,
-    },
-    {
-      text: "Πού πρέπει να υπολογίζεται το σκορ σε ένα live quiz;",
-      options: [
-        "Στο CSS",
-        "Στον browser του παίκτη",
-        "Στο localStorage",
-        "Στον server",
-      ],
-      correctIndex: 3,
-      seconds: 15,
-    },
-  ],
-};

@@ -1,36 +1,43 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  ArrowRight,
-  CheckCircle2,
-  Edit3,
-  LayoutGrid,
-  Play,
-  Plus,
-  Sparkles,
-} from "lucide-react";
+import { CheckCircle2, Edit3, LayoutGrid, Play, Plus } from "lucide-react";
 import { Header, Footer, ErrorNotice, Busy } from "../components/Shared";
-import {
-  api,
-  errorMessage,
-  library,
-  remember,
-  sampleQuiz,
-  ticketKey,
-} from "../data";
+import { api, errorMessage, library, remember, ticketKey } from "../data";
 import type { SavedQuiz } from "../types";
+import {
+  categories,
+  quizTemplates,
+  type QuizTemplate,
+} from "../catalog/quizzes";
+import QuizCatalog from "../components/QuizCatalog";
+
+// Τα quiz που δημιουργήθηκαν από το μηδέν δεν έχουν αναφορά σε έτοιμη κατηγορία.
+function categoryName(templateId?: string) {
+  const template = quizTemplates.find((item) => item.id === templateId);
+  return (
+    categories.find((item) => item.id === template?.category)?.name ??
+    "ΣΗΜΑ / QUIZ"
+  );
+}
 
 export default function Library() {
   const [items, setItems] = useState(library);
   const [error, setError] = useState("");
+  const [addedTitle, setAddedTitle] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const navigate = useNavigate();
-  async function createSample() {
-    setBusy("sample");
+  async function addTemplate(template: QuizTemplate) {
+    setBusy(`template:${template.id}`);
     setError("");
+    setAddedTitle("");
     try {
-      const { data } = await api.post<SavedQuiz>("/quizzes", sampleQuiz);
-      remember(data);
+      // Στέλνουμε μόνο το περιεχόμενο. Ο server δημιουργεί νέο id και δικό σου owner key.
+      const { data } = await api.post<SavedQuiz>("/quizzes", {
+        title: template.title,
+        questions: template.questions,
+      });
+      remember({ ...data, templateId: template.id });
+      setAddedTitle(template.title);
       setItems(library());
     } catch (e) {
       setError(errorMessage(e));
@@ -77,18 +84,34 @@ export default function Library() {
           </Link>
         </div>
         <ErrorNotice message={error} />
-        <div className="library-info">
+        {addedTitle && (
+          <div className="notice catalog-success" role="status">
+            <CheckCircle2 size={18} />
+            <span>
+              Το «{addedTitle}» προστέθηκε στη βιβλιοθήκη σου. Είναι έτοιμο για
+              επεξεργασία ή live παιχνίδι.
+            </span>
+          </div>
+        )}
+        <div className="library-info" id="my-library">
           <span>
-            <span className="live-dot" /> {items.length}{" "}
-            {items.length === 1 ? "quiz" : "quiz"} στη βιβλιοθήκη σου
+            <span className="live-dot" /> {items.length} quiz στη βιβλιοθήκη σου
           </span>
           <span>Αποθηκευμένα για αυτόν τον browser</span>
         </div>
+        {items.length === 0 && (
+          <div className="library-empty">
+            <p>Η βιβλιοθήκη σου περιμένει την πρώτη ιδέα.</p>
+            <a className="text-link" href="#catalog-title">
+              Διάλεξε ένα έτοιμο quiz παρακάτω ↓
+            </a>
+          </div>
+        )}
         <div className="quiz-grid">
           {items.map((quiz, index) => (
             <article className="quiz-card" key={quiz.id}>
               <div className={`quiz-cover cover-${index % 3}`}>
-                <span>ΣΗΜΑ / QUIZ</span>
+                <span>{categoryName(quiz.templateId)}</span>
                 <div>{["✳", "↗", "✦"][index % 3]}</div>
                 <small>{String(index + 1).padStart(2, "0")}</small>
               </div>
@@ -120,31 +143,6 @@ export default function Library() {
               </div>
             </article>
           ))}
-          <button
-            disabled={busy !== null}
-            className="sample-card"
-            onClick={() => void createSample()}
-          >
-            <span className="sample-icon">
-              <Sparkles size={28} />
-            </span>
-            <h2>
-              {items.length ? "Ένα quiz για δοκιμή;" : "Ξεκίνα με κάτι έτοιμο."}
-            </h2>
-            <p>
-              Τέσσερις ερωτήσεις για το web και τη σχεδίαση. Για να γνωρίσεις το
-              Σήμα στην πράξη.
-            </p>
-            <span className="text-link">
-              {busy === "sample" ? (
-                <Busy label="Δημιουργία…" />
-              ) : (
-                <>
-                  Πρόσθεσε το δοκιμαστικό <ArrowRight size={17} />
-                </>
-              )}
-            </span>
-          </button>
         </div>
         <div className="subtle-note">
           <CheckCircle2 size={17} />
@@ -154,6 +152,11 @@ export default function Library() {
             αντίγραφο του quiz σου.
           </p>
         </div>
+        <QuizCatalog
+          items={items}
+          busy={busy}
+          onAdd={(template) => void addTemplate(template)}
+        />
       </main>
       <Footer />
     </>

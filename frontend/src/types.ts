@@ -13,6 +13,8 @@ export interface SavedQuiz {
   title: string;
   ownerKey: string;
   questionCount: number;
+  // Τοπική αναφορά στο πρότυπο· τα ίδια τα ερωτήματα αποθηκεύονται κανονικά στη βάση.
+  templateId?: string;
 }
 export interface Player {
   id: string;
